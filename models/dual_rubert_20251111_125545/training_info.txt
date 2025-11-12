@@ -1,0 +1,29 @@
+=== ИНФОРМАЦИЯ О ОБУЧЕНИИ ===
+
+base_model: DeepPavlov/rubert-base-cased
+batch_size: 4
+epochs: 5
+max_len: 100
+learning_rate: 2e-05
+device: cpu
+timestamp: 20251111_125545
+test_accuracy_category: 1.0
+test_accuracy_urgency: 0.8108108108108109
+num_categories: 5
+num_urgency_levels: 3
+
+=== РЕЗУЛЬТАТЫ ===
+Точность категорий: 1.0000
+Точность срочности: 0.8108
+
+=== КЛАССЫ КАТЕГОРИЙ ===
+0: Аппаратный сбой
+1: Нарушение безопасности
+2: Потеря связи
+3: Сбой приложения
+4: Ухудшение сервиса
+
+=== КЛАССЫ СРОЧНОСТИ ===
+0: Высокий
+1: Низкий
+2: Средний
