@@ -22,16 +22,16 @@ LR = 2e-5                                    # Скорость обучения
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")  # Используем GPU, если доступен
 os.makedirs(SAVE_ROOT, exist_ok=True)        # Создаём папку для сохранения, если её нет
 
-print(f"🚀 Используется устройство: {DEVICE}")
+print(f"Используется устройство: {DEVICE}")
 
 # === Загрузка данных ===
-print("📊 Загрузка данных...")
+print("Загрузка данных...")
 data = pd.read_csv("data/incidents_fuul.csv")   # Загружаем CSV с инцидентами
 data = data.dropna(subset=["urgency"])          # Удаляем строки без метки срочности
-print(f"📊 Загружено {len(data)} записей")
+print(f"Загружено {len(data)} записей")
 
 # === Кодирование категориальных признаков ===
-print("🔧 Кодирование меток...")
+print("Кодирование меток...")
 le_category = LabelEncoder()
 data["category_label"] = le_category.fit_transform(data["category"])  # Категории → числа
 le_urgency = LabelEncoder()
@@ -41,7 +41,7 @@ data["urgency_label"] = le_urgency.fit_transform(data["urgency"])     # Сроч
 data["text_aug"] = "[категория: " + data["category"] + "] " + data["text"]
 
 # === Разделение данных на train/val/test ===
-print("🔀 Разделение данных...")
+print("Разделение данных...")
 train_texts, temp_texts, train_cat, temp_cat, train_urg, temp_urg = train_test_split(
     data["text_aug"], data["category_label"], data["urgency_label"], 
     test_size=0.3, random_state=42, stratify=data["urgency_label"]
@@ -49,10 +49,10 @@ train_texts, temp_texts, train_cat, temp_cat, train_urg, temp_urg = train_test_s
 val_texts, test_texts, val_cat, test_cat, val_urg, test_urg = train_test_split(
     temp_texts, temp_cat, temp_urg, test_size=0.6667, random_state=42, stratify=temp_urg
 )
-print(f"📚 Размеры данных: Train={len(train_texts)}, Val={len(val_texts)}, Test={len(test_texts)}")
+print(f"Размеры данных: Train={len(train_texts)}, Val={len(val_texts)}, Test={len(test_texts)}")
 
 # === Загрузка токенизатора ===
-print("🔧 Загрузка токенизатора...")
+print("Загрузка токенизатора...")
 tokenizer = BertTokenizer.from_pretrained(BASE_MODEL)
 
 # === Определение класса Dataset ===
@@ -91,7 +91,7 @@ def create_loader(texts, labels, shuffle=True):
     return DataLoader(ds, batch_size=BATCH_SIZE, shuffle=shuffle)
 
 # === Создание DataLoader для обеих задач ===
-print("🔧 Создание DataLoader...")
+print("Создание DataLoader...")
 train_cat_loader = create_loader(train_texts, train_cat)
 val_cat_loader = create_loader(val_texts, val_cat, shuffle=False)
 test_cat_loader = create_loader(test_texts, test_cat, shuffle=False)
@@ -103,15 +103,15 @@ test_urg_loader = create_loader(test_texts, test_urg, shuffle=False)
 # === Количество классов ===
 num_cat = len(le_category.classes_)
 num_urg = len(le_urgency.classes_)
-print(f"🎯 Категорий: {num_cat}, Срочность: {num_urg}")
+print(f"Категорий: {num_cat}, Срочность: {num_urg}")
 
 # === Загрузка моделей BERT для каждой задачи ===
-print("🔧 Загрузка моделей...")
+print("Загрузка моделей...")
 model_cat = BertForSequenceClassification.from_pretrained(BASE_MODEL, num_labels=num_cat).to(DEVICE)
 model_urg = BertForSequenceClassification.from_pretrained(BASE_MODEL, num_labels=num_urg).to(DEVICE)
 
 # === Балансировка классов для срочности ===
-print("⚖️ Вычисление весов классов...")
+print("Вычисление весов классов...")
 class_weights = compute_class_weight(
     class_weight="balanced",
     classes=np.arange(num_urg),
@@ -172,75 +172,75 @@ def train_epoch(model, optimizer, scheduler, loader, loss_fn=None, desc="Trainin
     return total_loss / len(loader)
 
 # === Основной цикл обучения ===
-print("🎯 Начало обучения...")
+print("Начало обучения...")
 history = {'epoch': [], 'cat_loss': [], 'urg_loss': [], 'val_cat_acc': [], 'val_urg_acc': []}
 
 for epoch in range(EPOCHS):
     print(f"\n{'='*50}")
-    print(f"🎯 ЭПОХА {epoch+1}/{EPOCHS}")
+    print(f"ЭПОХА {epoch+1}/{EPOCHS}")
     print(f"{'='*50}")
     # Обучаем модель для категорий
     avg_cat_loss = train_epoch(
-        model_cat, optimizer_cat, scheduler_cat, train_cat_loader, desc=f"📚 Категории [Эпоха {epoch+1}]"
+        model_cat, optimizer_cat, scheduler_cat, train_cat_loader, desc=f"Категории [Эпоха {epoch+1}]"
     )
     # Обучаем модель для срочности (с весами классов)
     avg_urg_loss = train_epoch(
-        model_urg, optimizer_urg, scheduler_urg, train_urg_loader, loss_fn_urg, desc=f"⏰ Срочность [Эпоха {epoch+1}]"
+        model_urg, optimizer_urg, scheduler_urg, train_urg_loader, loss_fn_urg, desc=f"Срочность [Эпоха {epoch+1}]"
     )
     # Проверяем точность на валидации
-    cat_acc, cat_labels, cat_preds = eval_model(model_cat, val_cat_loader, desc=f"📊 Валидация категорий")
-    urg_acc, urg_labels, urg_preds = eval_model(model_urg, val_urg_loader, desc=f"📊 Валидация срочности")
+    cat_acc, cat_labels, cat_preds = eval_model(model_cat, val_cat_loader, desc=f"Валидация категорий")
+    urg_acc, urg_labels, urg_preds = eval_model(model_urg, val_urg_loader, desc=f"Валидация срочности")
     # Сохраняем результаты
     history['epoch'].append(epoch + 1)
     history['cat_loss'].append(avg_cat_loss)
     history['urg_loss'].append(avg_urg_loss)
     history['val_cat_acc'].append(cat_acc)
     history['val_urg_acc'].append(urg_acc)
-    print(f"📚 Категории: loss={avg_cat_loss:.4f}, val_acc={cat_acc:.3f}")
-    print(f"⏰ Срочность: loss={avg_urg_loss:.4f}, val_acc={urg_acc:.3f}")
+    print(f"Категории: loss={avg_cat_loss:.4f}, val_acc={cat_acc:.3f}")
+    print(f"Срочность: loss={avg_urg_loss:.4f}, val_acc={urg_acc:.3f}")
 
 # === Финальное тестирование ===
 print(f"\n{'='*50}")
-print("🎯 Финальная оценка на тестовых данных")
+print("Финальная оценка на тестовых данных")
 print(f"{'='*50}")
 cat_acc, cat_labels, cat_preds = eval_model(model_cat, test_cat_loader, desc="📊 Тест категорий")
 urg_acc, urg_labels, urg_preds = eval_model(model_urg, test_urg_loader, desc="📊 Тест срочности")
-print(f"📚 Категории (тест): acc={cat_acc:.3f}")
-print(f"⏰ Срочность (тест): acc={urg_acc:.3f}")
+print(f"Категории (тест): acc={cat_acc:.3f}")
+print(f"Срочность (тест): acc={urg_acc:.3f}")
 
 # === Отчёты по качеству ===
 print(f"\n{'='*50}")
-print("📊 ИТОГОВЫЕ ОТЧЁТЫ")
+print("ИТОГОВЫЕ ОТЧЁТЫ")
 print(f"{'='*50}")
-print("\n📚 === Категории ===")
+print("\n=== Категории ===")
 print(classification_report(cat_labels, cat_preds, target_names=le_category.classes_))
-print("\n⏰ === Срочность ===")
+print("\n=== Срочность ===")
 print(classification_report(urg_labels, urg_preds, target_names=le_urgency.classes_))
 
 # === Сохранение моделей и результатов ===
 ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 save_dir = f"{SAVE_ROOT}/dual_rubert_{ts}"
 os.makedirs(save_dir, exist_ok=True)
-print(f"\n💾 Сохранение моделей в: {save_dir}")
+print(f"\nСохранение моделей в: {save_dir}")
 
 try:
     # Сохраняем модели
-    print("💾 Сохранение модели категорий...")
+    print("Сохранение модели категорий...")
     model_cat.save_pretrained(f"{save_dir}/category_model")
-    print("💾 Сохранение модели срочности...")
+    print("Сохранение модели срочности...")
     model_urg.save_pretrained(f"{save_dir}/urgency_model")
-    print("💾 Сохранение токенизатора...")
+    print("Сохранение токенизатора...")
     tokenizer.save_pretrained(save_dir)
     # Сохраняем кодировщики LabelEncoder
-    print("💾 Сохранение кодировщиков...")
+    print("Сохранение кодировщиков...")
     pd.to_pickle(le_category, f"{save_dir}/le_category.pkl")
     pd.to_pickle(le_urgency, f"{save_dir}/le_urgency.pkl")
     # Сохраняем историю обучения
-    print("💾 Сохранение истории обучения...")
+    print("Сохранение истории обучения...")
     history_df = pd.DataFrame(history)
     history_df.to_csv(f"{save_dir}/training_history.csv", index=False)
     # Сохраняем метаданные об обучении
-    print("💾 Сохранение параметров обучения...")
+    print("Сохранение параметров обучения...")
     training_info = {
         'base_model': BASE_MODEL,
         'batch_size': BATCH_SIZE,
@@ -256,44 +256,19 @@ try:
     }
     info_df = pd.DataFrame([training_info])
     info_df.to_csv(f"{save_dir}/training_info.csv", index=False)
-    # Дублируем информацию в txt
-    with open(f"{save_dir}/training_info.txt", "w", encoding='utf-8') as f:
-        f.write("=== ИНФОРМАЦИЯ О ОБУЧЕНИИ ===\n\n")
-        for key, value in training_info.items():
-            f.write(f"{key}: {value}\n")
-        f.write(f"\n=== РЕЗУЛЬТАТЫ ===\n")
-        f.write(f"Точность категорий: {cat_acc:.4f}\n")
-        f.write(f"Точность срочности: {urg_acc:.4f}\n")
-        f.write(f"\n=== КЛАССЫ КАТЕГОРИЙ ===\n")
-        for i, class_name in enumerate(le_category.classes_):
-            f.write(f"{i}: {class_name}\n")
-        f.write(f"\n=== КЛАССЫ СРОЧНОСТИ ===\n")
-        for i, class_name in enumerate(le_urgency.classes_):
-            f.write(f"{i}: {class_name}\n")
-    # Сохраняем текстовые отчёты классификации
-    print("💾 Сохранение отчётов классификации...")
-    with open(f"{save_dir}/classification_reports.txt", "w", encoding='utf-8') as f:
-        f.write("ОТЧЁТЫ КЛАССИФИКАЦИИ\n")
-        f.write("=" * 50 + "\n\n")
-        f.write("КАТЕГОРИИ:\n")
-        f.write(classification_report(cat_labels, cat_preds, target_names=le_category.classes_))
-        f.write("\n\nСРОЧНОСТЬ:\n")
-        f.write(classification_report(urg_labels, urg_preds, target_names=le_urgency.classes_))
     # Выводим результаты
-    print(f"✅ Все файлы успешно сохранены в: {save_dir}")
-    print(f"📊 Итоговые результаты:")
+    print(f"Все файлы успешно сохранены в: {save_dir}")
+    print(f"Итоговые результаты:")
     print(f"   • Категории: {cat_acc:.3f}")
     print(f"   • Срочность: {urg_acc:.3f}")
     # Вывод содержимого папки
-    print(f"\n📁 Содержимое папки {save_dir}:")
+    print(f"\nСодержимое папки {save_dir}:")
     for file in os.listdir(save_dir):
         file_path = os.path.join(save_dir, file)
         if os.path.isdir(file_path):
-            print(f"   📂 {file}/")
+            print(f"   {file}/")
         else:
             size = os.path.getsize(file_path)
-            print(f"   📄 {file} ({size} bytes)")
+            print(f"    {file} ({size} bytes)")
 except Exception as e:
-    # В случае ошибки при сохранении
-    print(f"❌ Ошибка при сохранении: {e}")
-    print("Проверьте доступ к папке и права на запись")
+    print(f"Ошибка при сохранении: {e}")
