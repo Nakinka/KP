@@ -1,2 +1,0 @@
-base_model,batch_size,epochs,max_len,learning_rate,device,timestamp,test_accuracy_category,test_accuracy_urgency,num_categories,num_urgency_levels
-DeepPavlov/rubert-base-cased,4,5,100,2e-05,cpu,20251111_125545,1.0,0.8108108108108109,5,3
